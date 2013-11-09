@@ -1704,6 +1704,9 @@ static int lcd_notifier_callback(struct notifier_block *this,
 				msecs_to_jiffies(70));
 		}
 		mutex_unlock(&ts->input_dev->mutex);
+#ifdef CONFIG_TOUCHSCREEN_SWEEP2WAKE
+		scr_suspended = false;
+#endif
 		break;
 	case LCD_EVENT_OFF_START:
 		mutex_lock(&ts->input_dev->mutex);
@@ -1711,8 +1714,16 @@ static int lcd_notifier_callback(struct notifier_block *this,
 			disable_irq(ts->client->irq);
 		break;
 	case LCD_EVENT_OFF_END:
-		synaptics_ts_stop(ts);
-		mutex_unlock(&ts->input_dev->mutex);
+#ifdef CONFIG_TOUCHSCREEN_SWEEP2WAKE
+		if (s2w_switch == 0)
+#endif
+		{
+			synaptics_ts_stop(ts);
+			mutex_unlock(&ts->input_dev->mutex);
+		}
+#ifdef CONFIG_TOUCHSCREEN_SWEEP2WAKE
+		scr_suspended = true;
+#endif
 		break;
 	default:
 		break;
